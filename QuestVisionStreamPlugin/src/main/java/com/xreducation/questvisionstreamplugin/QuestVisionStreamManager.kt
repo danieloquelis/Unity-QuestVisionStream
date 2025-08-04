@@ -118,6 +118,16 @@ class QuestVisionStreamManager(private val activity: Activity) {
             Log.w("QuestVisionStreamPlugin", "updateFrameData called but pixel data method not active")
         }
     }
+    
+    // 🚀 NEW: Receive YUV data directly from Unity (bypass conversion!)
+    fun updateFrameDataYUV(yData: ByteArray, uData: ByteArray, vData: ByteArray, width: Int, height: Int) {
+        if (usePixelDataMethod && pixelDataCapturer != null) {
+            pixelDataCapturer?.updateFrameYUV(yData, uData, vData, width, height)
+            Log.d("QuestVisionStreamPlugin", "Received YUV data: Y=${yData.size}, U=${uData.size}, V=${vData.size}")
+        } else {
+            Log.w("QuestVisionStreamPlugin", "updateFrameDataYUV called but pixel data method not active")
+        }
+    }
 
     private fun createPeerConnection(videoTrack: VideoTrack) {
         // ADDED: use ICE servers set from Unity (fallback to empty if none)

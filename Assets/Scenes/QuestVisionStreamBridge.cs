@@ -53,4 +53,10 @@ public static class QuestVisionStreamBridge
     {
         plugin?.Call("updateFrameData", pixelData, width, height);
     }
+    
+    // 🚀 NEW: Send YUV data directly (much more efficient!)
+    public static void UpdateFrameDataYUV(byte[] yData, byte[] uData, byte[] vData, int width, int height)
+    {
+        plugin?.Call("updateFrameDataYUV", yData, uData, vData, width, height);
+    }
 }

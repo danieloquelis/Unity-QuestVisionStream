@@ -1,0 +1,60 @@
+#pragma kernel CSMain
+
+// Input RGB texture from Unity
+Texture2D<float4> InputTexture;
+SamplerState sampler_InputTexture;
+
+// Output Y, U, V textures for WebRTC I420 format
+RWTexture2D<float> OutputY;
+RWTexture2D<float> OutputU;
+RWTexture2D<float> OutputV;
+
+// Conversion matrix for RGB to YUV (ITU-R BT.601)
+static const float3x3 RGB_TO_YUV = float3x3(
+    0.299f,  0.587f,  0.114f,   // Y
+   -0.169f, -0.331f,  0.500f,   // U  
+    0.500f, -0.419f, -0.081f    // V
+);
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    uint2 texSize;
+    InputTexture.GetDimensions(texSize.x, texSize.y);
+    
+    if (id.x >= texSize.x || id.y >= texSize.y)
+        return;
+    
+    // Sample RGB pixel
+    float3 rgb = InputTexture.SampleLevel(sampler_InputTexture, 
+                                         (id.xy + 0.5f) / texSize, 0).rgb;
+    
+    // Convert RGB to YUV
+    float3 yuv = mul(RGB_TO_YUV, rgb);
+    
+    // Y component (full resolution)
+    float y = yuv.x + 0.0625f; // Add offset for video range
+    OutputY[id.xy] = saturate(y);
+    
+    // U and V components (subsampled 2x2)
+    if (id.x % 2 == 0 && id.y % 2 == 0)
+    {
+        // Sample 2x2 block for better quality
+        float3 yuv00 = mul(RGB_TO_YUV, InputTexture.SampleLevel(sampler_InputTexture, 
+                                                                (id.xy + float2(0,0) + 0.5f) / texSize, 0).rgb);
+        float3 yuv01 = mul(RGB_TO_YUV, InputTexture.SampleLevel(sampler_InputTexture, 
+                                                                (id.xy + float2(0,1) + 0.5f) / texSize, 0).rgb);
+        float3 yuv10 = mul(RGB_TO_YUV, InputTexture.SampleLevel(sampler_InputTexture, 
+                                                                (id.xy + float2(1,0) + 0.5f) / texSize, 0).rgb);
+        float3 yuv11 = mul(RGB_TO_YUV, InputTexture.SampleLevel(sampler_InputTexture, 
+                                                                (id.xy + float2(1,1) + 0.5f) / texSize, 0).rgb);
+        
+        // Average the 2x2 block
+        float u = (yuv00.y + yuv01.y + yuv10.y + yuv11.y) * 0.25f + 0.5f;
+        float v = (yuv00.z + yuv01.z + yuv10.z + yuv11.z) * 0.25f + 0.5f;
+        
+        uint2 uvCoord = id.xy / 2;
+        OutputU[uvCoord] = saturate(u);
+        OutputV[uvCoord] = saturate(v);
+    }
+}

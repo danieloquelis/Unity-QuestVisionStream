@@ -168,7 +168,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &67823280
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1269,6 +1269,9 @@ MonoBehaviour:
   - stun:stun1.l.google.com:19302
   passthroughCameraManager: {fileID: 1299479381}
   previewRawImage: {fileID: 673610228}
+  usePixelDataMethod: 1
+  useGPUCompute: 1
+  rgbToYuvShader: {fileID: 7200000, guid: d411ec6977f604a85a2d3f546a8e2ac3, type: 3}
 --- !u!4 &991456153
 Transform:
   m_ObjectHideFlags: 0
@@ -1443,7 +1446,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1453129506
 MonoBehaviour:
   m_ObjectHideFlags: 0
