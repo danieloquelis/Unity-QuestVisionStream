@@ -2,6 +2,7 @@ import asyncio
 import json
 import cv2
 import websockets
+import time
 from aiortc import (
     RTCPeerConnection,
     RTCSessionDescription,
@@ -9,6 +10,17 @@ from aiortc import (
     RTCIceServer,
 )
 from aiortc.sdp import candidate_from_sdp
+
+# 🚀 PERFORMANCE SETTINGS
+ENABLE_DISPLAY = True      # Set to False for headless mode (fastest)
+LOG_INTERVAL = 30          # Log every N frames (30 = ~every 10 seconds at 3 FPS)
+MAX_FPS_DISPLAY = 30       # Limit display refresh rate
+ENABLE_DEBUG_KEYS = True   # Enable keyboard shortcuts
+
+# 🚀 IMAGE PROCESSING SETTINGS
+FLIP_VERTICAL = True       # Fix upside-down image (Unity → OpenCV coordinate fix)
+FLIP_HORIZONTAL = False    # Mirror image horizontally if needed
+ROTATE_180 = False         # Rotate image 180 degrees (alternative to flipping both axes)
 
 pcs = set()
 
@@ -44,40 +56,92 @@ async def signaling_handler(websocket):
             async def process_video():
                 frame_count = 0
                 last_log_time = asyncio.get_event_loop().time()
+                last_fps_time = last_log_time
+                fps_frame_count = 0
+                
                 try:
-                    print("[Server] Entering video processing loop...")
+                    print("[Server] 🚀 Entering OPTIMIZED video processing loop...")
                     while True:
                         try:
-                            print(f"[Server] Waiting for frame {frame_count + 1}...")
+                            # 🚀 OPTIMIZED: Removed per-frame logging
                             frame = await track.recv()
                             frame_count += 1
-                            current_time = asyncio.get_event_loop().time()
+                            fps_frame_count += 1
                             
-                            print(f"[Server] ✅ Received frame {frame_count}, size: {frame.width}x{frame.height}, format: {frame.format}")
+                            # 🚀 OPTIMIZED: Only calculate time when needed for logging
+                            should_log = frame_count % LOG_INTERVAL == 0
+                            current_time = asyncio.get_event_loop().time() if should_log else 0
                             
-                            # Log every 30 frames or every 5 seconds
-                            if frame_count % 30 == 0 or (current_time - last_log_time) > 5:
-                                print(f"[Server] Frame stats - Total: {frame_count}, Size: {frame.width}x{frame.height}, Time: {current_time - last_log_time:.2f}s")
+                            # 🚀 OPTIMIZED: Configurable logging frequency
+                            if should_log:
+                                fps = fps_frame_count / (current_time - last_fps_time) if (current_time - last_fps_time) > 0 else 0
+                                print(f"[Server] 📊 Frame {frame_count} | Size: {frame.width}x{frame.height} | FPS: {fps:.1f} | Format: {frame.format}")
                                 last_log_time = current_time
+                                last_fps_time = current_time
+                                fps_frame_count = 0
                             
-                            img = frame.to_ndarray(format="bgr24")
-                            
-                            # Validate image data
-                            if img is not None and img.size > 0:
-                                print(f"[Server] Image converted successfully, shape: {img.shape}, dtype: {img.dtype}")
-                                cv2.imshow("Quest PCA Stream", img)
-                                key = cv2.waitKey(1) & 0xFF
-                                if key == ord("q"):
-                                    print("[Server] Quit requested by user")
-                                    break
+                            # 🚀 OPTIMIZED: Conditional display processing
+                            if ENABLE_DISPLAY:
+                                # Fast frame conversion
+                                img = frame.to_ndarray(format="bgr24")
+                                
+                                # Quick validation without logging
+                                if img is not None and img.size > 0:
+                                    # 🚀 IMAGE TRANSFORMATIONS: Fix Unity → OpenCV coordinate differences
+                                    if ROTATE_180:
+                                        # Rotate 180 degrees (fastest for complete flip)
+                                        img = cv2.rotate(img, cv2.ROTATE_180)
+                                    else:
+                                        # Individual axis flips (more control)
+                                        if FLIP_VERTICAL:
+                                            img = cv2.flip(img, 0)  # 0 = flip vertically
+                                        if FLIP_HORIZONTAL:
+                                            img = cv2.flip(img, 1)  # 1 = flip horizontally
+                                    
+                                    # Non-blocking display update
+                                    cv2.imshow("Quest PCA Stream", img)
+                                    
+                                    # Non-blocking key check
+                                    if ENABLE_DEBUG_KEYS:
+                                        key = cv2.waitKey(1) & 0xFF
+                                        if key == ord("q"):
+                                            print("[Server] Quit requested by user")
+                                            break
+                                        elif key == ord("f"):
+                                            # Toggle fullscreen with 'f' key
+                                            cv2.setWindowProperty("Quest PCA Stream", cv2.WND_PROP_FULLSCREEN, 
+                                                                cv2.WINDOW_FULLSCREEN if cv2.getWindowProperty("Quest PCA Stream", cv2.WND_PROP_FULLSCREEN) == 0 else cv2.WINDOW_NORMAL)
+                                        elif key == ord("s"):
+                                            # Save screenshot with 's' key (already transformed)
+                                            timestamp = int(time.time())
+                                            filename = f"quest_frame_{timestamp}.jpg"
+                                            cv2.imwrite(filename, img)
+                                            print(f"[Server] 📸 Screenshot saved: {filename} ({frame.width}x{frame.height})")
+                                        elif key == ord("r"):
+                                            # Save raw frame without transformations
+                                            raw_img = frame.to_ndarray(format="bgr24")
+                                            timestamp = int(time.time())
+                                            filename = f"quest_frame_raw_{timestamp}.jpg"
+                                            cv2.imwrite(filename, raw_img)
+                                            print(f"[Server] 📸 Raw screenshot saved: {filename}")
+                                    else:
+                                        cv2.waitKey(1)  # Still need this for OpenCV window updates
+                                else:
+                                    # Only log errors occasionally
+                                    if frame_count % 100 == 0:
+                                        print(f"[Server] ⚠️ Warning: Received empty frame at count {frame_count}")
                             else:
-                                print("[Server] ⚠️ Warning: Received empty or invalid frame")
+                                # 🚀 HEADLESS MODE: Maximum performance, no display
+                                if should_log:
+                                    print(f"[Server] 🚀 HEADLESS: Processing frame {frame_count} (no display)")
                                 
                         except Exception as e:
-                            print(f"[Server] ❌ Error processing video frame: {e}")
-                            import traceback
-                            traceback.print_exc()
-                            await asyncio.sleep(0.1)  # Brief pause before retrying
+                            print(f"[Server] ❌ Error processing video frame {frame_count}: {e}")
+                            # 🚀 OPTIMIZED: Only print traceback for first few errors
+                            if frame_count < 10:
+                                import traceback
+                                traceback.print_exc()
+                            await asyncio.sleep(0.01)  # Shorter pause for faster recovery
                             
                 except Exception as e:
                     print(f"[Server] Video processing task ended: {e}")
@@ -139,7 +203,29 @@ async def signaling_handler(websocket):
         cv2.destroyAllWindows()
 
 async def main():
-    print("Signaling server starting on ws://0.0.0.0:3000")
+    print("🚀 OPTIMIZED Quest Vision Stream Server")
+    print("=" * 60)
+    print(f"📺 Display mode: {'Enabled' if ENABLE_DISPLAY else 'HEADLESS (fastest)'}")
+    print(f"📊 Log interval: Every {LOG_INTERVAL} frames")
+    print(f"🌐 WebSocket server: ws://0.0.0.0:3000")
+    print()
+    print("🖼️  IMAGE PROCESSING:")
+    if ROTATE_180:
+        print("   🔄 Rotate 180°: Enabled")
+    else:
+        print(f"   ↕️  Flip vertical: {'✅' if FLIP_VERTICAL else '❌'} (fixes upside-down)")
+        print(f"   ↔️  Flip horizontal: {'✅' if FLIP_HORIZONTAL else '❌'}")
+    print()
+    if ENABLE_DEBUG_KEYS:
+        print("⌨️  DEBUG KEYS:")
+        print("   q = Quit")
+        print("   f = Toggle fullscreen")
+        print("   s = Save screenshot (processed)")
+        print("   r = Save raw screenshot (unprocessed)")
+    else:
+        print("⌨️  Debug keys: Disabled")
+    print("=" * 60)
+    
     async with websockets.serve(signaling_handler, "0.0.0.0", 3000, ping_interval=20, ping_timeout=20):
         await asyncio.Future()
 
