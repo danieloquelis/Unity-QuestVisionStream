@@ -19,21 +19,27 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
-}
-
-dependencies {
-    implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.google.android.material:material:1.9.0")
 }
 
 repositories {
     google()
     mavenCentral()
+}
+
+dependencies {
+// AndroidX
+    implementation("androidx.core:core-ktx:1.12.0")
+    implementation("androidx.appcompat:appcompat:1.6.1")
+
+    // WebRTC
+    implementation("io.github.webrtc-sdk:android:125.6422.06.1")
+
+    // OkHttp for signaling
+    implementation("com.squareup.okhttp3:okhttp:4.11.0")
 }
