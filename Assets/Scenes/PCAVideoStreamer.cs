@@ -81,6 +81,11 @@ public class PCAVideoStreamer : MonoBehaviour
 
         QuestVisionStreamBridge.SetIceServers(iceServers);
         QuestVisionStreamBridge.ConnectToSignalingServer(signalingServerUrl);
+        var receiver = FindObjectOfType<PCAVideoDetectionsReceiver>();
+        if (receiver != null)
+        {
+            QuestVisionStreamBridge.SetUnityMessageTarget(receiver.gameObject.name, "OnDetections");
+        }
 
         if (usePixelDataMethod)
         {
@@ -96,6 +101,9 @@ public class PCAVideoStreamer : MonoBehaviour
         }
 
         QuestVisionStreamBridge.CreateOffer();
+
+        // Inform receiver about stream dimensions for viewport mapping
+        if (receiver != null) receiver.SetStreamDimensions(streamWidth, streamHeight);
         isStreaming = true;
     }
 

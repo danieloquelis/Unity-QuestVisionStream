@@ -89,3 +89,4 @@ crashlytics-build.properties
 *_BurstDebugInformation_DoNotShip/*
 android/*
 .DS_Store
+*.pt

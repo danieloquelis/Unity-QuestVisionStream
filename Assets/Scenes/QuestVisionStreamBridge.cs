@@ -59,4 +59,16 @@ public static class QuestVisionStreamBridge
     {
         plugin?.Call("updateFrameDataYUV", yData, uData, vData, width, height);
     }
+
+    // 🚀 NEW: Configure which Unity GameObject receives DataChannel messages
+    public static void SetUnityMessageTarget(string gameObjectName, string methodName)
+    {
+        plugin?.Call("setUnityMessageTarget", gameObjectName, methodName);
+    }
+
+    // Optional: allow sending messages back to server via data channel
+    public static void SendDataChannelMessage(string message)
+    {
+        plugin?.Call("sendDataChannelMessage", message);
+    }
 }

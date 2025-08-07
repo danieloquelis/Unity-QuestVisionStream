@@ -1,6 +1,7 @@
 import cv2
 import asyncio
-from typing import Optional, Callable
+from typing import Optional, Callable, Any, Dict, List
+import json
 
 class VideoProcessor:
     def __init__(self, 
@@ -19,9 +20,13 @@ class VideoProcessor:
         self.last_fps_time = 0
         self.fps_frame_count = 0
         self.frame_callback: Optional[Callable] = None
+        self.data_channel_sender = None  # function to send JSON over data channel
     
     def set_frame_callback(self, callback: Callable):
         self.frame_callback = callback
+
+    def set_data_channel_sender(self, sender: Callable[[Dict[str, Any]], None]):
+        self.data_channel_sender = sender
     
     def process_frame(self, frame) -> Optional[cv2.Mat]:
         try:
@@ -83,7 +88,17 @@ class VideoProcessor:
                     continue
                 
                 if self.frame_callback:
-                    self.frame_callback(processed_img, frame)
+                    # Expect callback to optionally return detections to forward
+                    detections = self.frame_callback(processed_img, frame)
+                    if detections is not None and self.data_channel_sender is not None:
+                        try:
+                            self.data_channel_sender({
+                                "type": "detections",
+                                "frame": self.frame_count,
+                                "detections": detections,
+                            })
+                        except Exception as e:
+                            print(f"[VideoProcessor] Failed to send detections: {e}")
                 
                 if not self.display_frame(processed_img):
                     break

@@ -6,8 +6,9 @@ from aiortc import (
     RTCSessionDescription,
     RTCConfiguration,
     RTCIceServer,
+    RTCDataChannel,
 )
-from aiortc.sdp import candidate_from_sdp
+from aiortc.sdp import candidate_from_sdp, candidate_to_sdp
 from video_processor import VideoProcessor
 
 class WebRTCServer:
@@ -16,12 +17,14 @@ class WebRTCServer:
         self.port = port
         self.video_processor = video_processor or VideoProcessor()
         self.pcs = set()
+        from typing import Optional
+        self.detections_channel: Optional[RTCDataChannel] = None
     
     def set_video_processor(self, video_processor: VideoProcessor):
         self.video_processor = video_processor
     
     async def handle_signaling(self, websocket):
-        print("[WebRTC] Quest connected for signaling")
+        print("[WebRTC] Quest connected")
         
         # Configure WebRTC with STUN server
         config = RTCConfiguration(
@@ -35,36 +38,67 @@ class WebRTCServer:
         
         @pc.on("iceconnectionstatechange")
         async def on_ice_state_change():
-            print(f"[WebRTC] ICE connection state: {pc.iceConnectionState}")
+            print(f"[WebRTC] ICE: {pc.iceConnectionState}")
         
         @pc.on("connectionstatechange")
         async def on_connection_state_change():
-            print(f"[WebRTC] Connection state: {pc.connectionState}")
+            print(f"[WebRTC] PC: {pc.connectionState}")
         
         @pc.on("track")
         async def on_track(track):
-            print(f"[WebRTC] Track received: {track.kind}")
+            print(f"[WebRTC] Track: {track.kind}")
             if track.kind == "video":
-                print(f"[WebRTC] Starting video processing for track: {track.id}")
-                
+                print(f"[WebRTC] Video: {track.id}")
                 # Start video processing in separate task
+                nonlocal video_task
                 video_task = asyncio.create_task(
                     self.video_processor.process_video_stream(track)
                 )
-                print("[WebRTC] Video processing task started")
+                print("[WebRTC] Processing started")
+
+        @pc.on("datachannel")
+        def on_datachannel(channel: RTCDataChannel):
+            print(f"[WebRTC] DC: {channel.label}")
+            if channel.label == "detections":
+                self.detections_channel = channel
+                @channel.on("open")
+                def _on_open():
+                    try:
+                        channel.send(json.dumps({"type": "ready"}))
+                    except Exception:
+                        pass
+                @channel.on("message")
+                def _on_message(message):
+                    # No-op; Quest may send messages if needed
+                    return
+
+        @pc.on("icecandidate")
+        async def on_icecandidate(cand):
+            if cand is None:
+                return
+            payload = {
+                "type": "candidate",
+                "candidate": candidate_to_sdp(cand),
+                "sdpMid": cand.sdpMid,
+                "sdpMLineIndex": cand.sdpMLineIndex,
+            }
+            try:
+                await websocket.send(json.dumps(payload))
+            except Exception:
+                pass
         
         try:
             async for message in websocket:
                 data = json.loads(message)
-                print(f"[WebRTC] Received: {data['type']}")
+                # messages: offer | candidate
                 
                 if data["type"] == "offer":
                     if offer_received:
-                        print("[WebRTC] Ignoring duplicate offer")
+                        # ignore duplicate
                         continue
                     
                     offer_received = True
-                    print("[WebRTC] Processing offer...")
+                    print("[WebRTC] Offer")
                     
                     offer = RTCSessionDescription(sdp=data["sdp"], type="offer")
                     await pc.setRemoteDescription(offer)
@@ -74,10 +108,10 @@ class WebRTCServer:
                     
                     response = {"type": "answer", "sdp": pc.localDescription.sdp}
                     await websocket.send(json.dumps(response))
-                    print("[WebRTC] Answer sent")
+                    print("[WebRTC] Answer")
                 
                 elif data["type"] == "candidate":
-                    print("[WebRTC] Processing ICE candidate...")
+                    # add remote candidate
                     cand = candidate_from_sdp(data["candidate"])
                     cand.sdpMid = data["sdpMid"]
                     cand.sdpMLineIndex = int(data["sdpMLineIndex"])

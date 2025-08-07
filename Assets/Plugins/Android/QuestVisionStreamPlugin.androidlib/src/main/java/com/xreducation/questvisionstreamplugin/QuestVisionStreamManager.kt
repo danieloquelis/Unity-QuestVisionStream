@@ -19,6 +19,13 @@ class QuestVisionStreamManager(private val activity: Activity) {
     // ADDED: Hold ICE servers passed from Unity
     private var iceServers: MutableList<PeerConnection.IceServer> = mutableListOf()
 
+    // ADDED: Data channel for detections from server
+    private var dataChannel: DataChannel? = null
+
+    // ADDED: Unity callback target for incoming detection messages
+    private var unityCallbackGameObject: String = "QuestVisionStreamReceiver"
+    private var unityCallbackMethod: String = "OnDetections"
+
     init {
         try {
             System.loadLibrary("jingle_peerconnection_so")
@@ -57,6 +64,13 @@ class QuestVisionStreamManager(private val activity: Activity) {
             iceServers.add(PeerConnection.IceServer.builder(url).createIceServer())
             Log.i("QuestVisionStreamPlugin", "ICE server added: $url")
         }
+    }
+
+    // ADDED: Configure Unity message target (GameObject and method)
+    fun setUnityMessageTarget(gameObjectName: String, methodName: String) {
+        unityCallbackGameObject = gameObjectName
+        unityCallbackMethod = methodName
+        Log.i("QuestVisionStreamPlugin", "Unity message target set to $unityCallbackGameObject.$unityCallbackMethod")
     }
 
     fun connectToSignalingServer(url: String) {
@@ -174,6 +188,7 @@ class QuestVisionStreamManager(private val activity: Activity) {
 
             override fun onDataChannel(channel: DataChannel) {
                 Log.i("QuestVisionStreamPlugin", "DataChannel opened: ${channel.label()}")
+                registerDataChannel(channel)
             }
 
             override fun onAddStream(stream: MediaStream) {}
@@ -185,6 +200,8 @@ class QuestVisionStreamManager(private val activity: Activity) {
 
         peerConnection?.addTrack(videoTrack, listOf("ARDAMS"))
         Log.i("QuestVisionStreamPlugin", "Video track added to PeerConnection")
+        // Create data channel proactively as offerer so server can receive it
+        createDataChannel()
         createOffer()
     }
 
@@ -242,6 +259,70 @@ class QuestVisionStreamManager(private val activity: Activity) {
                 )
                 peerConnection?.addIceCandidate(candidate)
             }
+        }
+    }
+
+    // ADDED: Create and register a data channel for detections
+    private fun createDataChannel() {
+        if (peerConnection == null) return
+        if (dataChannel != null) return
+        val init = DataChannel.Init()
+        dataChannel = peerConnection!!.createDataChannel("detections", init)
+        Log.i("QuestVisionStreamPlugin", "Created DataChannel 'detections' as offerer")
+        registerDataChannel(dataChannel!!)
+    }
+
+    private fun registerDataChannel(channel: DataChannel) {
+        dataChannel = channel
+        channel.registerObserver(object : DataChannel.Observer {
+            override fun onBufferedAmountChange(previousAmount: Long) {
+                // No-op
+            }
+
+            override fun onStateChange() { }
+
+            override fun onMessage(buffer: DataChannel.Buffer) {
+                try {
+                    if (!buffer.binary) {
+                        val data = ByteArray(buffer.data.remaining())
+                        buffer.data.get(data)
+                        val message = String(data, Charsets.UTF_8)
+                        Log.d("QuestVisionStreamPlugin", "DataChannel message: ${message.take(128)}...")
+                        activity.runOnUiThread {
+                            try {
+                                val unityPlayerClass = Class.forName("com.unity3d.player.UnityPlayer")
+                                val sendMethod = unityPlayerClass.getMethod(
+                                    "UnitySendMessage",
+                                    String::class.java,
+                                    String::class.java,
+                                    String::class.java
+                                )
+                                sendMethod.invoke(null, unityCallbackGameObject, unityCallbackMethod, message)
+                            } catch (e: Exception) { }
+                        }
+                    } else {
+                        // ignore binary
+                    }
+                } catch (e: Exception) {
+                    // ignore
+                }
+            }
+        })
+    }
+
+    // ADDED: Allow Unity to send a message over data channel if needed
+    fun sendDataChannelMessage(message: String) {
+        try {
+            val channel = dataChannel
+            if (channel == null || channel.state() != DataChannel.State.OPEN) {
+                Log.w("QuestVisionStreamPlugin", "DataChannel not open; cannot send")
+                return
+            }
+            val buffer = DataChannel.Buffer(java.nio.ByteBuffer.wrap(message.toByteArray(Charsets.UTF_8)), false)
+            channel.send(buffer)
+            Log.d("QuestVisionStreamPlugin", "Sent DataChannel message (${message.length} bytes)")
+        } catch (e: Exception) {
+            Log.e("QuestVisionStreamPlugin", "Failed to send DataChannel message", e)
         }
     }
 }
