@@ -119,7 +119,7 @@ class UnityTextureVideoCapturer(
                 
                 // TODO: Implement proper texture buffer creation
                 // This requires complex integration with Unity's native texture system
-                Log.w("UnityTextureVideoCapturer", "⚠️ Texture method not fully implemented yet")
+                Log.w("UnityTextureVideoCapturer", "Texture method not fully implemented yet")
                 Log.w("UnityTextureVideoCapturer", "Please use pixel data method (set usePixelDataMethod = true in Unity)")
                 return@post
                 
@@ -132,11 +132,11 @@ class UnityTextureVideoCapturer(
                 
                 val count = frameCounter.incrementAndGet()
                 if (count % 30 == 0L) {
-                    Log.i("UnityTextureVideoCapturer", "✅ Frame $count captured and sent to WebRTC (${width}x${height})")
+                    Log.i("UnityTextureVideoCapturer", "Frame $count captured and sent to WebRTC (${width}x${height})")
                 }
             }
         } catch (e: Exception) {
-            Log.e("UnityTextureVideoCapturer", "❌ Error capturing frame", e)
+            Log.e("UnityTextureVideoCapturer", "Error capturing frame", e)
         }
     }
 
@@ -178,7 +178,7 @@ class UnityTextureVideoCapturer(
     companion object {
         init {
             // Native library loading will be added later for optimization
-            Log.i("UnityTextureVideoCapturer", "Using Java-only implementation")
+            Log.i("UnityTextureVideoCapturer", "Using Kotlin-only implementation")
         }
     }
 }

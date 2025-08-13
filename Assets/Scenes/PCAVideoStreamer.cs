@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using PassthroughCameraSamples;
 using UnityEngine.Rendering;
+using Unity.Collections;
 
 public class PCAVideoStreamer : MonoBehaviour
 {
@@ -115,8 +116,8 @@ public class PCAVideoStreamer : MonoBehaviour
             
             if (usePixelDataMethod)
             {
-                // 🚀 PERFORMANCE: Send frames
-                if (frameCount % 4 == 0) // Send every 4th frame for ~7.5 FPS (for testing)
+				// 🚀 PERFORMANCE: Send frames more frequently (every 3nd frame ~20 FPS @ 60Hz)
+				if (frameCount % 2 == 0)
                 {
                     if (useGPUCompute && rgbToYuvShader != null)
                     {
@@ -139,7 +140,7 @@ public class PCAVideoStreamer : MonoBehaviour
         }
     }
 
-    private IEnumerator ReadPixelsAndSend()
+	private IEnumerator ReadPixelsAndSend()
     {
         // Use AsyncGPUReadback for better performance (Unity 2018.2+)
         var request = AsyncGPUReadback.Request(blitTexture, 0, TextureFormat.RGB24);

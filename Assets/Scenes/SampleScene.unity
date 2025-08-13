@@ -1186,7 +1186,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9594e5cb25c9448a1975a6be4fdf5296, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  signalingServerUrl: wss://450a06edcadd.ngrok-free.app
+  signalingServerUrl: wss://18da8009a974.ngrok-free.app
   iceServers:
   - stun:stun.l.google.com:19302
   - stun:stun1.l.google.com:19302
@@ -1243,7 +1243,7 @@ MonoBehaviour:
   environmentRaycast: {fileID: 287719758}
   bboxPrefab: {fileID: 8539326283079756073}
   invertY: 1
-  minDistanceMeters: 0.3
+  minDistanceMeters: 1.5
   allowMultiplePerClass: 0
 --- !u!4 &1051380586
 Transform:

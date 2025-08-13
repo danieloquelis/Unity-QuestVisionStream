@@ -1,4 +1,3 @@
-// QuestVisionStreamManager.kt - Updated version
 package com.xreducation.questvisionstreamplugin
 
 import android.app.Activity
@@ -15,15 +14,14 @@ class QuestVisionStreamManager(private val activity: Activity) {
     private var videoCapturer: VideoCapturer? = null
     private var pixelDataCapturer: PixelDataVideoCapturer? = null
     private var usePixelDataMethod = false
-
-    // ADDED: Hold ICE servers passed from Unity
     private var iceServers: MutableList<PeerConnection.IceServer> = mutableListOf()
-
-    // ADDED: Data channel for detections from server
     private var dataChannel: DataChannel? = null
 
-    // ADDED: Unity callback target for incoming detection messages
+    // Unity callback target for incoming detection messages
+    // TODO: Make this dynamic and take the name of the game object
     private var unityCallbackGameObject: String = "QuestVisionStreamReceiver"
+
+    // TODO: Better to have something like OnMessageReceived instead of "Detections"
     private var unityCallbackMethod: String = "OnDetections"
 
     init {
@@ -57,7 +55,7 @@ class QuestVisionStreamManager(private val activity: Activity) {
         Log.i("QuestVisionStreamPlugin", "PeerConnectionFactory initialized successfully")
     }
 
-    // ADDED: Method to receive ICE servers from Unity
+    // Method to receive ICE servers from Unity
     fun setIceServers(servers: List<String>) {
         iceServers.clear()
         for (url in servers) {
@@ -66,7 +64,7 @@ class QuestVisionStreamManager(private val activity: Activity) {
         }
     }
 
-    // ADDED: Configure Unity message target (GameObject and method)
+    // Configure Unity message target (GameObject and method)
     fun setUnityMessageTarget(gameObjectName: String, methodName: String) {
         unityCallbackGameObject = gameObjectName
         unityCallbackMethod = methodName
@@ -94,7 +92,7 @@ class QuestVisionStreamManager(private val activity: Activity) {
             val source = peerConnectionFactory.createVideoSource(false)
             
             pixelDataCapturer?.initializePixelCapture(activity, source.capturerObserver)
-            pixelDataCapturer?.startCapture(width, height, 15) // Lower framerate for CPU method
+            pixelDataCapturer?.startCapture(width, height, 30)
             Log.i("QuestVisionStreamPlugin", "Pixel data capturer started")
             
             videoTrack = peerConnectionFactory.createVideoTrack("ARDAMSv0", source)
@@ -110,7 +108,7 @@ class QuestVisionStreamManager(private val activity: Activity) {
             val source = peerConnectionFactory.createVideoSource(false)
             
             pixelDataCapturer?.initializePixelCapture(activity, source.capturerObserver)
-            pixelDataCapturer?.startCapture(width, height, 15)
+            pixelDataCapturer?.startCapture(width, height, 30)
             Log.i("QuestVisionStreamPlugin", "Fallback pixel data capturer started")
             
             videoTrack = peerConnectionFactory.createVideoTrack("ARDAMSv0", source)
@@ -133,7 +131,7 @@ class QuestVisionStreamManager(private val activity: Activity) {
         }
     }
     
-    // 🚀 NEW: Receive YUV data directly from Unity (bypass conversion!)
+    // Receive YUV data directly from Unity (bypass conversion!)
     fun updateFrameDataYUV(yData: ByteArray, uData: ByteArray, vData: ByteArray, width: Int, height: Int) {
         if (usePixelDataMethod && pixelDataCapturer != null) {
             pixelDataCapturer?.updateFrameYUV(yData, uData, vData, width, height)
@@ -144,7 +142,6 @@ class QuestVisionStreamManager(private val activity: Activity) {
     }
 
     private fun createPeerConnection(videoTrack: VideoTrack) {
-        // ADDED: use ICE servers set from Unity (fallback to empty if none)
         val config = PeerConnection.RTCConfiguration(iceServers).apply {
             sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN
         }
@@ -200,6 +197,7 @@ class QuestVisionStreamManager(private val activity: Activity) {
 
         peerConnection?.addTrack(videoTrack, listOf("ARDAMS"))
         Log.i("QuestVisionStreamPlugin", "Video track added to PeerConnection")
+
         // Create data channel proactively as offerer so server can receive it
         createDataChannel()
         createOffer()
@@ -262,7 +260,7 @@ class QuestVisionStreamManager(private val activity: Activity) {
         }
     }
 
-    // ADDED: Create and register a data channel for detections
+    // Create and register a data channel for detections
     private fun createDataChannel() {
         if (peerConnection == null) return
         if (dataChannel != null) return
@@ -310,7 +308,7 @@ class QuestVisionStreamManager(private val activity: Activity) {
         })
     }
 
-    // ADDED: Allow Unity to send a message over data channel if needed
+    // Allow Unity to send a message over data channel if needed
     fun sendDataChannelMessage(message: String) {
         try {
             val channel = dataChannel
