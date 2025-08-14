@@ -33,6 +33,16 @@ public static class QuestVisionStreamBridge
         plugin?.Call("setExternalTexture", (long)texPtr, width, height);
     }
 
+    public static void SetTargetFps(int fps)
+    {
+        plugin?.Call("setTargetFps", fps);
+    }
+
+    public static void SetDesiredResolution(int width, int height)
+    {
+        plugin?.Call("setDesiredResolution", width, height);
+    }
+
     public static void CreateOffer()
     {
         plugin?.Call("createOffer");
@@ -70,5 +80,15 @@ public static class QuestVisionStreamBridge
     public static void SendDataChannelMessage(string message)
     {
         plugin?.Call("sendDataChannelMessage", message);
+    }
+
+    public static void CreateCustomDataChannel(string name)
+    {
+        plugin?.Call("createCustomDataChannel", name);
+    }
+
+    public static void SendDataChannelMessageOn(string channel, string message)
+    {
+        plugin?.Call("sendDataChannelMessageOn", channel, message);
     }
 }

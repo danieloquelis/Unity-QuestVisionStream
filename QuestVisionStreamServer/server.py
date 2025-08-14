@@ -4,8 +4,8 @@ from video_processor import VideoProcessor
 from webrtc_server import WebRTCServer
 from config import *
 # from body_tracker import track_body
-# from yolo_detector import detect_objects
-from florence2_detector import detect_objects
+from yolo_detector import detect_objects
+# from florence2_detector import detect_objects
 
 async def main():
     print(f"WebSocket server: ws://{HOST}:{PORT}")

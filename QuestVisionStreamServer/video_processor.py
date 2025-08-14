@@ -92,9 +92,12 @@ class VideoProcessor:
                     detections = self.frame_callback(processed_img, frame)
                     if detections is not None and self.data_channel_sender is not None:
                         try:
+                            height, width = processed_img.shape[:2]
                             self.data_channel_sender({
                                 "type": "detections",
                                 "frame": self.frame_count,
+                                "width": int(width),
+                                "height": int(height),
                                 "detections": detections,
                             })
                         except Exception as e:

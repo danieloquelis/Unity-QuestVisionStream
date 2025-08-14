@@ -5,6 +5,7 @@ using System.Collections;
 using PassthroughCameraSamples;
 using UnityEngine.Rendering;
 using Unity.Collections;
+using Streaming;
 
 public class PCAVideoStreamer : MonoBehaviour
 {
@@ -13,10 +14,16 @@ public class PCAVideoStreamer : MonoBehaviour
         "stun:stun.l.google.com:19302",
         "stun:stun1.l.google.com:19302"
     };
+
     [SerializeField] private WebCamTextureManager passthroughCameraManager;
+    [SerializeField] private QuestVisionStreamEvents eventsProxy;
     [SerializeField] private RawImage previewRawImage;
-    [SerializeField] private bool usePixelDataMethod = true; // Toggle between methods
-    [SerializeField] private bool useGPUCompute = true; // 🚀 NEW: Use GPU compute shader
+
+    [Header("Advanced Options")]
+    [SerializeField] private bool useGPUCompute = true;
+    [SerializeField] private bool usePixelDataMethod = true;
+    [Range(1,30)][SerializeField] private int targetFps = 30;
+    [Range(2,4)][SerializeField] private int sendEveryNFrame = 2;
     [SerializeField] private ComputeShader rgbToYuvShader;
 
     private WebCamTexture webcamTexture;
@@ -26,86 +33,84 @@ public class PCAVideoStreamer : MonoBehaviour
     private bool isStreaming = false;
     private int frameCount = 0;
     
-    // 🚀 GPU Compute Shader variables
+    // GPU Compute Shader variables
     private RenderTexture yTexture, uTexture, vTexture;
     private ComputeBuffer yuvDataBuffer;
     private int computeKernel;
+    private FrameSender frameSender;
 
     private IEnumerator Start()
     {
-        yield return new WaitUntil(() =>
-            passthroughCameraManager != null &&
-            passthroughCameraManager.WebCamTexture != null &&
-            passthroughCameraManager.WebCamTexture.isPlaying);
+        yield return new WaitUntil(IsPassthroughReady);
+        var res = InitializeSourceAndPreview();
+        SetupCapture(res.x, res.y);
+        ConfigureSignalingAndTargets(res.x, res.y);
+    }
 
+    private bool IsPassthroughReady()
+    {
+        return passthroughCameraManager != null &&
+               passthroughCameraManager.WebCamTexture != null &&
+               passthroughCameraManager.WebCamTexture.isPlaying;
+    }
+
+    private Vector2Int InitializeSourceAndPreview()
+    {
         webcamTexture = passthroughCameraManager.WebCamTexture;
-        Debug.Log($"Passthrough initialized: {webcamTexture.width}x{webcamTexture.height}");
+        if (previewRawImage != null) previewRawImage.texture = webcamTexture;
+        var res = ResolutionUtils.ComputeStreamResolution(webcamTexture.width, webcamTexture.height, 640, 480);
+        Debug.Log($"Passthrough: {webcamTexture.width}x{webcamTexture.height} | Stream: {res.x}x{res.y}");
+        blitTexture = new RenderTexture(res.x, res.y, 0, RenderTextureFormat.ARGB32);
+        blitTexture.Create();
+        return res;
+    }
 
-        if (previewRawImage != null)
-            previewRawImage.texture = webcamTexture;
-
-        // 🚀 PERFORMANCE: Use smaller resolution for streaming (4-16x speed boost!)
-        int streamWidth = Mathf.Min(640, webcamTexture.width);   // Max 640 width
-        int streamHeight = Mathf.Min(480, webcamTexture.height); // Max 480 height
-        
-        // Keep aspect ratio
-        float aspectRatio = (float)webcamTexture.width / webcamTexture.height;
-        if (streamWidth / (float)streamHeight > aspectRatio)
+    private void SetupCapture(int streamWidth, int streamHeight)
+    {
+        if (!usePixelDataMethod) return;
+        if (useGPUCompute && rgbToYuvShader != null)
         {
-            streamWidth = Mathf.RoundToInt(streamHeight * aspectRatio);
+            SetupGPUComputeShader(streamWidth, streamHeight);
+            frameSender = new FrameSender(rgbToYuvShader);
+            frameSender.SetupYuvTargets(yTexture, uTexture, vTexture);
         }
         else
         {
-            streamHeight = Mathf.RoundToInt(streamWidth / aspectRatio);
+            readbackTexture = new Texture2D(streamWidth, streamHeight, TextureFormat.RGB24, false);
+            pixelData = new byte[streamWidth * streamHeight * 3];
         }
-        
-        Debug.Log($"📹 Streaming resolution: {streamWidth}x{streamHeight} (original: {webcamTexture.width}x{webcamTexture.height})");
-        
-        blitTexture = new RenderTexture(streamWidth, streamHeight, 0, RenderTextureFormat.ARGB32);
-        blitTexture.Create();
+    }
 
-        if (usePixelDataMethod)
-        {
-            if (useGPUCompute && rgbToYuvShader != null)
-            {
-                // 🚀 GPU Compute Shader setup
-                SetupGPUComputeShader(streamWidth, streamHeight);
-            }
-            else
-            {
-                // CPU fallback method
-                readbackTexture = new Texture2D(streamWidth, streamHeight, TextureFormat.RGB24, false);
-                pixelData = new byte[streamWidth * streamHeight * 3]; // RGB24 = 3 bytes per pixel
-                Debug.Log($"Created readback texture: {readbackTexture.width}x{readbackTexture.height}");
-            }
-        }
-
+    private void ConfigureSignalingAndTargets(int streamWidth, int streamHeight)
+    {
         QuestVisionStreamBridge.SetIceServers(iceServers);
+        QuestVisionStreamBridge.SetTargetFps(targetFps);
+        QuestVisionStreamBridge.SetDesiredResolution(streamWidth, streamHeight);
         QuestVisionStreamBridge.ConnectToSignalingServer(signalingServerUrl);
-        var receiver = FindObjectOfType<PCAVideoDetectionsReceiver>();
-        if (receiver != null)
+
+        if (eventsProxy == null) eventsProxy = FindObjectOfType<QuestVisionStreamEvents>();
+        if (eventsProxy != null)
         {
-            QuestVisionStreamBridge.SetUnityMessageTarget(receiver.gameObject.name, "OnDetections");
+            QuestVisionStreamBridge.SetUnityMessageTarget(eventsProxy.gameObject.name, "OnDetections");
+        }
+        else
+        {
+            Debug.LogWarning("No events proxy or receiver in scene; detections will be dropped.");
         }
 
         if (usePixelDataMethod)
         {
-            // Use pixel data method
             QuestVisionStreamBridge.SetExternalTexture(IntPtr.Zero, streamWidth, streamHeight);
         }
         else
         {
-            // Use texture pointer method (original)
-            IntPtr texPtr = blitTexture.GetNativeTexturePtr();
-            Debug.Log($"Sending blit RenderTexture ptr: {texPtr}");
+            var texPtr = blitTexture.GetNativeTexturePtr();
             QuestVisionStreamBridge.SetExternalTexture(texPtr, blitTexture.width, blitTexture.height);
         }
 
         QuestVisionStreamBridge.CreateOffer();
-
-        // Inform receiver about stream dimensions for viewport mapping
-        if (receiver != null) receiver.SetStreamDimensions(streamWidth, streamHeight);
         isStreaming = true;
+        eventsProxy?.OnVideoStarted("");
     }
 
     private void Update()
@@ -116,17 +121,15 @@ public class PCAVideoStreamer : MonoBehaviour
             
             if (usePixelDataMethod)
             {
-				// 🚀 PERFORMANCE: Send frames more frequently (every 3nd frame ~20 FPS @ 60Hz)
-				if (frameCount % 2 == 0)
+                int divisor = Mathf.Clamp(sendEveryNFrame, 2, 4);
+                if (frameCount % divisor == 0)
                 {
                     if (useGPUCompute && rgbToYuvShader != null)
                     {
-                        // GPU-accelerated processing
                         ProcessFrameGPU();
                     }
                     else
                     {
-                        // CPU fallback
                         StartCoroutine(ReadPixelsAndSend());
                     }
                 }
@@ -135,7 +138,7 @@ public class PCAVideoStreamer : MonoBehaviour
             frameCount++;
             if (frameCount % 30 == 0)
             {
-                Debug.Log($"Unity frame {frameCount}, method: {(usePixelDataMethod ? "pixel data" : "texture pointer")}");
+                Debug.Log($"Frame {frameCount} [{(usePixelDataMethod ? "pixel" : "texture")}] ");
             }
         }
     }
@@ -159,19 +162,17 @@ public class PCAVideoStreamer : MonoBehaviour
             
             if (frameCount % 60 == 0)
             {
-                Debug.Log($"✅ Sent frame data: {data.Length} bytes ({blitTexture.width}x{blitTexture.height})");
+                Debug.Log($"Sent frame: {data.Length} bytes ({blitTexture.width}x{blitTexture.height})");
             }
         }
     }
 
-    // 🚀 GPU Compute Shader setup
     private void SetupGPUComputeShader(int width, int height)
     {
         if (rgbToYuvShader == null) return;
         
         computeKernel = rgbToYuvShader.FindKernel("CSMain");
         
-        // Create output textures for Y, U, V planes
         yTexture = new RenderTexture(width, height, 0, RenderTextureFormat.R8);
         uTexture = new RenderTexture(width / 2, height / 2, 0, RenderTextureFormat.R8);
         vTexture = new RenderTexture(width / 2, height / 2, 0, RenderTextureFormat.R8);
@@ -183,73 +184,26 @@ public class PCAVideoStreamer : MonoBehaviour
         yTexture.Create();
         uTexture.Create();
         vTexture.Create();
-        
-        Debug.Log($"🚀 GPU compute shader initialized: {width}x{height}");
     }
     
-    // 🚀 GPU-accelerated frame processing
     private void ProcessFrameGPU()
     {
         if (rgbToYuvShader == null || yTexture == null) return;
-        
-        // Set compute shader inputs
-        rgbToYuvShader.SetTexture(computeKernel, "InputTexture", blitTexture);
-        rgbToYuvShader.SetTexture(computeKernel, "OutputY", yTexture);
-        rgbToYuvShader.SetTexture(computeKernel, "OutputU", uTexture);
-        rgbToYuvShader.SetTexture(computeKernel, "OutputV", vTexture);
-        
-        // Dispatch compute shader (parallel GPU processing!)
-        int threadGroupsX = (blitTexture.width + 7) / 8;
-        int threadGroupsY = (blitTexture.height + 7) / 8;
-        rgbToYuvShader.Dispatch(computeKernel, threadGroupsX, threadGroupsY, 1);
-        
-        // Now we need to read YUV data and send to Android
-        // This is still a GPU→CPU transfer, but much more efficient
-        StartCoroutine(ReadYUVAndSend());
+            frameSender.DispatchYuv(blitTexture, yTexture, uTexture, vTexture);
+            StartCoroutine(frameSender.ReadYuvAndSend(yTexture, uTexture, vTexture, (y,u,v,w,h)=>{
+                QuestVisionStreamBridge.UpdateFrameDataYUV(y,u,v,w,h);
+            }, frameCount));
     }
     
-    private IEnumerator ReadYUVAndSend()
-    {
-        // 🚀 Read Y, U, V planes separately (much more efficient!)
-        var yRequest = AsyncGPUReadback.Request(yTexture);
-        var uRequest = AsyncGPUReadback.Request(uTexture);
-        var vRequest = AsyncGPUReadback.Request(vTexture);
-        
-        yield return new WaitUntil(() => yRequest.done && uRequest.done && vRequest.done);
-        
-        if (yRequest.hasError || uRequest.hasError || vRequest.hasError)
-        {
-            Debug.LogError("Failed to read YUV planes");
-            yield break;
-        }
-        
-        // 🚀 Send YUV data directly to Android (no conversion needed!)
-        var yData = yRequest.GetData<byte>().ToArray();
-        var uData = uRequest.GetData<byte>().ToArray();
-        var vData = vRequest.GetData<byte>().ToArray();
-        
-        QuestVisionStreamBridge.UpdateFrameDataYUV(
-            yData, uData, vData,
-            yTexture.width, yTexture.height
-        );
-        
-        if (frameCount % 60 == 0)
-        {
-            Debug.Log($"🚀 GPU YUV frame: Y={yData.Length}, U={uData.Length}, V={vData.Length} bytes ({yTexture.width}x{yTexture.height})");
-        }
-    }
-
     private void OnDestroy()
     {
         isStreaming = false;
         
-        // Clean up CPU resources
         if (readbackTexture != null)
         {
             Destroy(readbackTexture);
         }
         
-        // Clean up GPU resources
         if (yTexture != null) yTexture.Release();
         if (uTexture != null) uTexture.Release();
         if (vTexture != null) vTexture.Release();
