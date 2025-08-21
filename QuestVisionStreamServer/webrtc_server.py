@@ -28,7 +28,14 @@ class WebRTCServer:
         
         # Configure WebRTC with STUN server
         config = RTCConfiguration(
-            iceServers=[RTCIceServer(urls=["stun:stun.l.google.com:19302"])]
+            iceServers=[
+                RTCIceServer(urls=["stun:stun.l.google.com:19302"]),
+                RTCIceServer(
+                    urls=["turn:openrelay.metered.ca:443?transport=tcp"],
+                    username="openrelayproject",
+                    credential="openrelayproject",
+                ),
+            ]
         )
         pc = RTCPeerConnection(configuration=config)
         self.pcs.add(pc)

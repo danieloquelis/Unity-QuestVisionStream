@@ -2,27 +2,27 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace Streaming
+namespace QuestVisionStream.Utils
 {
     public class FrameSender
     {
-        private readonly ComputeShader rgbToYuvShader;
-        private readonly int computeKernel;
-        private readonly bool verbose;
+        private readonly ComputeShader _rgbToYuvShader;
+        private readonly int _computeKernel;
+        private readonly bool _verbose;
 
         public FrameSender(ComputeShader shader, bool verboseLogging = false)
         {
-            rgbToYuvShader = shader;
-            verbose = verboseLogging;
-            if (rgbToYuvShader != null)
+            _rgbToYuvShader = shader;
+            _verbose = verboseLogging;
+            if (_rgbToYuvShader != null)
             {
-                computeKernel = rgbToYuvShader.FindKernel("CSMain");
+                _computeKernel = _rgbToYuvShader.FindKernel("CSMain");
             }
         }
 
         public void SetupYuvTargets(RenderTexture y, RenderTexture u, RenderTexture v)
         {
-            if (rgbToYuvShader == null) return;
+            if (_rgbToYuvShader == null) return;
             y.enableRandomWrite = true; u.enableRandomWrite = true; v.enableRandomWrite = true;
             if (!y.IsCreated()) y.Create();
             if (!u.IsCreated()) u.Create();
@@ -31,14 +31,14 @@ namespace Streaming
 
         public void DispatchYuv(RenderTexture input, RenderTexture y, RenderTexture u, RenderTexture v)
         {
-            if (rgbToYuvShader == null) return;
-            rgbToYuvShader.SetTexture(computeKernel, "InputTexture", input);
-            rgbToYuvShader.SetTexture(computeKernel, "OutputY", y);
-            rgbToYuvShader.SetTexture(computeKernel, "OutputU", u);
-            rgbToYuvShader.SetTexture(computeKernel, "OutputV", v);
-            int groupsX = (input.width + 7) / 8;
-            int groupsY = (input.height + 7) / 8;
-            rgbToYuvShader.Dispatch(computeKernel, groupsX, groupsY, 1);
+            if (!_rgbToYuvShader) return;
+            _rgbToYuvShader.SetTexture(_computeKernel, "InputTexture", input);
+            _rgbToYuvShader.SetTexture(_computeKernel, "OutputY", y);
+            _rgbToYuvShader.SetTexture(_computeKernel, "OutputU", u);
+            _rgbToYuvShader.SetTexture(_computeKernel, "OutputV", v);
+            var groupsX = (input.width + 7) / 8;
+            var groupsY = (input.height + 7) / 8;
+            _rgbToYuvShader.Dispatch(_computeKernel, groupsX, groupsY, 1);
         }
 
         public IEnumerator ReadYuvAndSend(RenderTexture y, RenderTexture u, RenderTexture v, System.Action<byte[], byte[], byte[], int, int> sender, int frameCount)
@@ -52,7 +52,7 @@ namespace Streaming
             var uData = uReq.GetData<byte>().ToArray();
             var vData = vReq.GetData<byte>().ToArray();
             sender?.Invoke(yData, uData, vData, y.width, y.height);
-            if (verbose && frameCount % 60 == 0)
+            if (_verbose && frameCount % 60 == 0)
             {
                 Debug.Log($"GPU YUV frame sent ({y.width}x{y.height})");
             }

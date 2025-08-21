@@ -1,15 +1,15 @@
 using UnityEngine;
 
-namespace Streaming
+namespace QuestVisionStream.Utils
 {
     public static class ResolutionUtils
     {
         public static Vector2Int ComputeStreamResolution(int sourceWidth, int sourceHeight, int maxWidth = 640, int maxHeight = 480)
         {
-            int width = Mathf.Min(maxWidth, sourceWidth);
-            int height = Mathf.Min(maxHeight, sourceHeight);
+            var width = Mathf.Min(maxWidth, sourceWidth);
+            var height = Mathf.Min(maxHeight, sourceHeight);
 
-            float aspect = sourceHeight > 0 ? (float)sourceWidth / sourceHeight : 1f;
+            var aspect = sourceHeight > 0 ? (float)sourceWidth / sourceHeight : 1f;
             if (height > 0 && width / (float)height > aspect)
             {
                 width = Mathf.RoundToInt(height * aspect);

@@ -46,12 +46,25 @@ class QuestVisionStreamManager(private val activity: Activity) {
         Log.i(TAG, "PeerConnectionFactory initialized")
     }
 
-    // Method to receive ICE servers from Unity
     fun setIceServers(servers: List<String>) {
         iceServers.clear()
         for (url in servers) {
             iceServers.add(PeerConnection.IceServer.builder(url).createIceServer())
             Log.i(TAG, "ICE server added: $url")
+        }
+    }
+
+    fun addTurnServer(url: String, username: String, credential: String) {
+        try {
+            val server = PeerConnection.IceServer
+                .builder(url)
+                .setUsername(username)
+                .setPassword(credential)
+                .createIceServer()
+            iceServers.add(server)
+            Log.i(TAG, "TURN server added: $url (u=${username.take(4)}**)")
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to add TURN server: $url", e)
         }
     }
 

@@ -27,7 +27,7 @@ public class DetectionTagController : MonoBehaviour
         }
     }
 
-    private float AddAngle(float value, float toAdd)
+    private static float AddAngle(float value, float toAdd)
     {
         value += toAdd;
         if (value > 360.0f)
@@ -46,10 +46,5 @@ public class DetectionTagController : MonoBehaviour
     public void SetYoloClassName(string className)
     {
         textMesh.text = className;
-    }
-
-    public string GetYoloClassName()
-    {
-        return textMesh.text;
     }
 }

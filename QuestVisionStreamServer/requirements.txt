@@ -5,3 +5,11 @@ numpy
 inference-sdk
 mediapipe
 ultralytics
+
+# florence
+torch
+torchvision
+torchaudio
+einops
+timm
+transformers

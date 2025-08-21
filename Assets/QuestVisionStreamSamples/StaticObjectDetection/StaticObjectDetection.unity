@@ -1161,99 +1161,6 @@ Transform:
   - {fileID: 387539036}
   m_Father: {fileID: 1591081961}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &991456151
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 991456153}
-  - component: {fileID: 991456152}
-  - component: {fileID: 991456154}
-  m_Layer: 0
-  m_Name: PCAVideoStreamer
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &991456152
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 991456151}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9594e5cb25c9448a1975a6be4fdf5296, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  signalingServerUrl: wss://18da8009a974.ngrok-free.app
-  iceServers:
-  - stun:stun.l.google.com:19302
-  - stun:stun1.l.google.com:19302
-  passthroughCameraManager: {fileID: 1299479381}
-  eventsProxy: {fileID: 991456154}
-  previewRawImage: {fileID: 0}
-  useGPUCompute: 1
-  usePixelDataMethod: 1
-  targetFps: 30
-  sendEveryNFrame: 2
-  rgbToYuvShader: {fileID: 7200000, guid: d411ec6977f604a85a2d3f546a8e2ac3, type: 3}
---- !u!4 &991456153
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 991456151}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &991456154
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 991456151}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 74f0511a3e5ff4b6f8cccae272e09d85, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  OnConnectionStarted:
-    m_PersistentCalls:
-      m_Calls: []
-  OnConnectionClosed:
-    m_PersistentCalls:
-      m_Calls: []
-  OnVideoStreamStarted:
-    m_PersistentCalls:
-      m_Calls: []
-  OnDetectionsJson:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1051380585}
-        m_TargetAssemblyTypeName: StaticSpawner, Assembly-CSharp
-        m_MethodName: OnDetections
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
 --- !u!1 &1051380584
 GameObject:
   m_ObjectHideFlags: 0
@@ -1880,6 +1787,111 @@ Transform:
   - {fileID: 989691406}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &398119876957031287
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 2170727121161939497, guid: a2b041a88f8ab48c1be3a9e2c7de62ee, type: 3}
+      propertyPath: m_Name
+      value: PCAVideoStreamer
+      objectReference: {fileID: 0}
+    - target: {fileID: 2740042396379930347, guid: a2b041a88f8ab48c1be3a9e2c7de62ee, type: 3}
+      propertyPath: onDetectionsJson.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2740042396379930347, guid: a2b041a88f8ab48c1be3a9e2c7de62ee, type: 3}
+      propertyPath: onDetectionsJson.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1051380585}
+    - target: {fileID: 2740042396379930347, guid: a2b041a88f8ab48c1be3a9e2c7de62ee, type: 3}
+      propertyPath: onDetectionsJson.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2740042396379930347, guid: a2b041a88f8ab48c1be3a9e2c7de62ee, type: 3}
+      propertyPath: onDetectionsJson.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: OnDetections
+      objectReference: {fileID: 0}
+    - target: {fileID: 2740042396379930347, guid: a2b041a88f8ab48c1be3a9e2c7de62ee, type: 3}
+      propertyPath: onDetectionsJson.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: DetectionSpawnerManager, Assembly-CSharp
+      objectReference: {fileID: 0}
+    - target: {fileID: 2740042396379930347, guid: a2b041a88f8ab48c1be3a9e2c7de62ee, type: 3}
+      propertyPath: onDetectionsJson.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
+      objectReference: {fileID: 0}
+    - target: {fileID: 7468787704501389608, guid: a2b041a88f8ab48c1be3a9e2c7de62ee, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7468787704501389608, guid: a2b041a88f8ab48c1be3a9e2c7de62ee, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7468787704501389608, guid: a2b041a88f8ab48c1be3a9e2c7de62ee, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7468787704501389608, guid: a2b041a88f8ab48c1be3a9e2c7de62ee, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7468787704501389608, guid: a2b041a88f8ab48c1be3a9e2c7de62ee, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7468787704501389608, guid: a2b041a88f8ab48c1be3a9e2c7de62ee, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7468787704501389608, guid: a2b041a88f8ab48c1be3a9e2c7de62ee, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7468787704501389608, guid: a2b041a88f8ab48c1be3a9e2c7de62ee, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7468787704501389608, guid: a2b041a88f8ab48c1be3a9e2c7de62ee, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7468787704501389608, guid: a2b041a88f8ab48c1be3a9e2c7de62ee, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7792627254621781564, guid: a2b041a88f8ab48c1be3a9e2c7de62ee, type: 3}
+      propertyPath: turnUsername
+      value: openrelayproject
+      objectReference: {fileID: 0}
+    - target: {fileID: 7792627254621781564, guid: a2b041a88f8ab48c1be3a9e2c7de62ee, type: 3}
+      propertyPath: turnServerUrl
+      value: turn:openrelay.metered.ca:443?transport=tcp
+      objectReference: {fileID: 0}
+    - target: {fileID: 7792627254621781564, guid: a2b041a88f8ab48c1be3a9e2c7de62ee, type: 3}
+      propertyPath: turnCredential
+      value: openrelayproject
+      objectReference: {fileID: 0}
+    - target: {fileID: 7792627254621781564, guid: a2b041a88f8ab48c1be3a9e2c7de62ee, type: 3}
+      propertyPath: enableTurnServer
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7792627254621781564, guid: a2b041a88f8ab48c1be3a9e2c7de62ee, type: 3}
+      propertyPath: signalingServerUrl
+      value: wss://315926f98a69.ngrok-free.app
+      objectReference: {fileID: 0}
+    - target: {fileID: 7792627254621781564, guid: a2b041a88f8ab48c1be3a9e2c7de62ee, type: 3}
+      propertyPath: passthroughCameraManager
+      value: 
+      objectReference: {fileID: 1299479381}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: a2b041a88f8ab48c1be3a9e2c7de62ee, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -1888,5 +1900,5 @@ SceneRoots:
   - {fileID: 145520132}
   - {fileID: 1299479380}
   - {fileID: 287719757}
-  - {fileID: 991456153}
+  - {fileID: 398119876957031287}
   - {fileID: 1051380586}

@@ -12,16 +12,16 @@ public class DetectionSpawnerManager : MonoBehaviour
 	[SerializeField] private bool invertY = true;
 	[SerializeField] private float minDistanceMeters = 0.3f;
 	[SerializeField] private bool allowMultiplePerClass = false;
-	private int streamWidth = 640;
-	private int streamHeight = 480;
-
-	private readonly Dictionary<string, GameObject> spawnedObjects = new();
-	private readonly HashSet<string> spawnedClasses = new();
+	
+	private int _streamWidth = 640;
+	private int _streamHeight = 480;
+	private readonly Dictionary<string, GameObject> _spawnedObjects = new();
+	private readonly HashSet<string> _spawnedClasses = new();
 
 	private void Awake()
 	{
-		if (environmentRaycast == null) environmentRaycast = FindObjectOfType<EnvironmentRayCastSampleManager>();
-		if (webCamTextureManager == null) webCamTextureManager = FindObjectOfType<WebCamTextureManager>();
+		if (environmentRaycast == null) environmentRaycast = FindFirstObjectByType<EnvironmentRayCastSampleManager>();
+		if (webCamTextureManager == null) webCamTextureManager = FindFirstObjectByType<WebCamTextureManager>();
 	}
 
 	public void OnDetections(string json)
@@ -30,15 +30,17 @@ public class DetectionSpawnerManager : MonoBehaviour
 		if (payload?.detections == null) return;
 		
 		// Adapt to server-provided frame size if available
+		// This is needed as to make the streaming performing we start with a small resolution
+		// With time it achieves the resolution specified
 		if (payload.width > 0 && payload.height > 0)
 		{
-			streamWidth = payload.width;
-			streamHeight = payload.height;
+			_streamWidth = payload.width;
+			_streamHeight = payload.height;
 		}
 		ProcessDetections(payload.detections);
 	}
 
-	private DetectionsPayload TryParse(string json)
+	private static DetectionsPayload TryParse(string json)
 	{
 		try { return JsonUtility.FromJson<DetectionsPayload>(json); }
 		catch { return null; }
@@ -60,15 +62,14 @@ public class DetectionSpawnerManager : MonoBehaviour
 	{
 		if (!allowMultiplePerClass)
 		{
-			if (spawnedClasses.Contains(detection.label)) return true;
+			if (_spawnedClasses.Contains(detection.label)) return true;
 		}
 		else
 		{
-			foreach (var kvp in spawnedObjects)
+			foreach (var (key, go) in _spawnedObjects)
 			{
-				var go = kvp.Value;
 				if (go == null) continue;
-				if (!kvp.Key.StartsWith(detection.label + "_")) continue;
+				if (!key.StartsWith(detection.label + "_")) continue;
 				if (Vector3.Distance(worldPos, go.transform.position) < minDistanceMeters) return true;
 			}
 		}
@@ -83,8 +84,8 @@ public class DetectionSpawnerManager : MonoBehaviour
 		var eye = webCamTextureManager.Eye;
 		var camRes = PassthroughCameraUtils.GetCameraIntrinsics(eye).Resolution;
 		
-		var nx = cx / Mathf.Max(1, streamWidth);
-		var ny = cy / Mathf.Max(1, streamHeight);
+		var nx = cx / Mathf.Max(1, _streamWidth);
+		var ny = cy / Mathf.Max(1, _streamHeight);
 		
 		if (invertY) ny = 1f - ny;
 		var px = Mathf.RoundToInt(nx * camRes.x);
@@ -93,18 +94,21 @@ public class DetectionSpawnerManager : MonoBehaviour
 		var ray = PassthroughCameraUtils.ScreenPointToRayInWorld(eye, new Vector2Int(px, py));
 		var posOpt = environmentRaycast.PlaceGameObjectByScreenPos(ray);
 		
-		return posOpt.HasValue ? posOpt.Value : Vector3.zero;
+		return posOpt ?? Vector3.zero;
 	}
 
 	private void SpawnObject(string className, Vector3 position)
 	{
-		var uniqueKey = $"{className}_{spawnedObjects.Count}";
+		var uniqueKey = $"{className}_{_spawnedObjects.Count}";
+		
 		var go = Instantiate(bboxPrefab, position, Quaternion.identity);
 		var tagController = go.GetComponent<DetectionTagController>();
+		
 		tagController.SetYoloClassName(className);
-		go.name = $"Detection_{className}_{spawnedObjects.Count}";
-		spawnedObjects[uniqueKey] = go;
-		spawnedClasses.Add(className);
+		go.name = $"Detection_{className}_{_spawnedObjects.Count}";
+		
+		_spawnedObjects[uniqueKey] = go;
+		_spawnedClasses.Add(className);
 	}
 
 	[Serializable]
