@@ -5,6 +5,7 @@ numpy
 inference-sdk
 mediapipe
 ultralytics
+accelerate
 
 # florence
 torch

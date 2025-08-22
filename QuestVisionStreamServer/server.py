@@ -1,14 +1,29 @@
 import asyncio
 import json
+import argparse
 from video_processor import VideoProcessor
 from webrtc_server import WebRTCServer
 from config import *
-# from body_tracker import track_body
-from yolo_detector import detect_objects
-# from florence2_detector import detect_objects
+from detectors import get_detector
+
+def parse_arguments():
+    parser = argparse.ArgumentParser(description='QuestVisionStream Server')
+    parser.add_argument('--detector', 
+                       choices=['yolo', 'florence2', 'owl2', 'body'], 
+                       default='yolo',
+                       help='Type of detector to use (default: yolo)')
+    return parser.parse_args()
 
 async def main():
+    args = parse_arguments()
+    
+    detector_func = get_detector(args.detector)
+    if detector_func is None:
+        print(f"Error: Unknown detector '{args.detector}'")
+        return
+    
     print(f"WebSocket server: ws://{HOST}:{PORT}")
+    print(f"Using detector: {args.detector}")
     
     video_processor = VideoProcessor(
         enable_display=ENABLE_DISPLAY,
@@ -18,11 +33,14 @@ async def main():
         log_interval=LOG_INTERVAL
     )
     
-    # video_processor.set_frame_callback(track_body)
     def frame_callback(img, frame):
-        # detect_objects now returns (img, detections)
-        processed_img, detections = detect_objects(img, frame)
-        return detections
+        if args.detector == 'body':
+            # body_tracker returns different format
+            return detector_func(img, frame)
+        else:
+            # Other detectors return (img, detections)
+            processed_img, detections = detector_func(img, frame)
+            return detections
 
     video_processor.set_frame_callback(frame_callback)
 

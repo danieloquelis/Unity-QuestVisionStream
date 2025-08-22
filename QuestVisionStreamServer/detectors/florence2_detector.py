@@ -16,6 +16,7 @@ FRAME_SKIP = 2
 # e.g., DOWNSCALE = (320, 240)
 DOWNSCALE: Optional[Tuple[int, int]] = None
 
+# Does not perform well on MPS
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 print(f"[Florence2] Loading model on {DEVICE}...")
@@ -117,7 +118,7 @@ def detect_objects(img: np.ndarray, frame: Optional[Any] = None):
     # keep generation tiny for speed
     generated_ids = model.generate(
         **inputs,
-        max_new_tokens=256,      # was 256; reduce for speed
+        max_new_tokens=256,      
         num_beams=1,             # greedy
         do_sample=False,
         use_cache=False,         # avoid KV cache issue

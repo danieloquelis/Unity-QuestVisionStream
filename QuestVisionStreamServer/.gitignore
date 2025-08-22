@@ -140,3 +140,7 @@ quest_frame_raw_*.jpg
 frame_*.jpg
 callback_frame_*.jpg
 recording.avi
+
+# Samples
+*_samples/*
+models/*

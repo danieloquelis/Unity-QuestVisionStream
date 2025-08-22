@@ -4,19 +4,17 @@ import torch
 from ultralytics import YOLO
 from typing import List, Dict, Any
 
-MODEL_PATH = "yolo11n.pt"
+MODEL_PATH = "models/yolo11n.pt"
 CONF_THRES = 0.6
 DEVICE = (
     "mps" if torch.backends.mps.is_available() else
     ("cuda" if torch.cuda.is_available() else "cpu")
 )
 
-# Preload model when module is imported
 print(f"Loading YOLO model on {DEVICE}...")
 model = YOLO(MODEL_PATH)
 print("YOLO model loaded!")
 
-# Classes to ignore
 IGNORE_CLASSES = {"person", "car", "truck", "bus", "motorcycle", "bicycle"}
 
 def detect_objects(img: np.ndarray, frame=None):

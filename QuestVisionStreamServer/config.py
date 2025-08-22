@@ -1,8 +1,7 @@
-# Performance settings
-ENABLE_DISPLAY = True      # Set to False for headless mode
-LOG_INTERVAL = 30          # Log every N frames
+ENABLE_DISPLAY = True      # Set to False for headless mode, avoid showing the image on the screen
+LOG_INTERVAL = 30         
 
-# Image processing settings
+# Image pre-processing settings
 FLIP_VERTICAL = True       
 FLIP_HORIZONTAL = False    
 ROTATE_180 = False         
