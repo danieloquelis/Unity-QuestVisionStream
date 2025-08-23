@@ -1,0 +1,2 @@
+echo "java=17.0.16.fx-zulu" > .sdkmanrc
+sdk env install
