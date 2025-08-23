@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.0 - 2025-08-23
+
+### Chores
+
+- Add missing .meta files from com.questvisionstream UPM ([645da5b](https://github.com/danieloquelis/Unity-QuestVisionStream/commit/645da5b028852f494c86df3499adbdc05cb25766))
+
 ## 2.0.0 - 2025-08-23
 
 ### Features
