@@ -1,28 +1,24 @@
 # Unity QuestVisionStream
 
-A Unity package that enables real-time computer vision operations on Meta Quest headsets using the Passthrough Camera API (PCA) with WebRTC streaming to external GPU servers for AI inference, object detection, and tracking. This solution bypasses traditional HTTP request bottlenecks, delivering seamless real-time performance.
+A Unity package that enables real-time computer vision operations on Meta Quest headsets using the Passthrough Camera API (PCA) with WebRTC streaming to external GPU servers for AI inference. This solution bypasses traditional HTTP request bottlenecks, delivering seamless real-time performance.
 
 ## Overview
 
-QuestVisionStream solves the performance limitations of running GPU-intensive computer vision operations directly on Meta Quest devices. Instead of processing AI models locally on the headset, it streams the passthrough camera feed in real-time to external machines (local or cloud) where powerful GPUs can run inference models like YOLO, Florence2, GroundingDINO, and more. The results are sent back to the headset for spatial operations like spawning objects, real-time object recognition, and interactive experiences.
+QuestVisionStream solves the performance limitations of running GPU-intensive computer vision operations directly on Meta Quest devices. Instead of processing AI models locally on the headset, it streams the passthrough camera feed in real-time to external machines (local or cloud) where powerful GPUs can run inference models. The results are sent back to the headset for spatial operations and interactive experiences.
 
-This approach eliminates the delays and server overload issues that come with traditional HTTP request-based solutions, providing truly real-time performance.
+**This approach eliminates the delays and server overload issues that come with traditional HTTP request-based solutions, providing truly real-time performance.**
 
 This approach provides:
 
 - **Real-time performance**: Minimal latency with continuous streaming pipeline
 - **GPU-agnostic**: Works with both Vulkan and OpenGLES3 graphics APIs (fully tested with Vulkan)
 - **OpenXR compatible**: Unlike other solutions that require Oculus SDK
-- **Scalable**: Can use local machines or cloud GPU servers
-- **Low latency**: WebRTC-based streaming with optimized frame processing
 
 ## Demos
 
-| Demo               | Description                                                     | Use Case                                                                      |
-| ------------------ | --------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| **YOLO Detection** | Real-time object detection using YOLO11n model                  | General object recognition, inventory management, safety monitoring           |
-| **Florence2**      | Advanced vision-language model for detailed scene understanding | Complex scene analysis, object relationship detection, detailed descriptions  |
-| **GroundingDINO**  | Zero-shot object detection with text prompts                    | Custom object detection, interactive object finding, educational applications |
+| **YOLO XL**                | **Florence2 (Zero-shot)**      |
+| -------------------------- | ------------------------------ |
+| ![YOBJD](Media/YoloXL.gif) | ![F2OBJD](Media/Florence2.gif) |
 
 ## Problem Solved
 
