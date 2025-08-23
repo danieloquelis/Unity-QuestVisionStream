@@ -263,8 +263,8 @@ build_android() {
     log_success "Android plugin built and copied successfully!"
 }
 
-# Function to copy directory contents excluding .meta files
-copy_without_meta() {
+# Function to copy directory contents including .meta files
+copy_with_meta() {
     local source="$1"
     local destination="$2"
     
@@ -273,13 +273,13 @@ copy_without_meta() {
         return
     fi
     
-    log_info "Copying $source to $destination (excluding .meta files)..."
+    log_info "Copying $source to $destination (including .meta files)..."
     
     # Create destination directory
     mkdir -p "$destination"
     
-    # Use rsync to copy excluding .meta files
-    rsync -av --exclude="*.meta" "$source/" "$destination/"
+    # Use rsync to copy everything including .meta files
+    rsync -av "$source/" "$destination/"
     
     log_success "Copy completed: $source -> $destination"
 }
@@ -303,7 +303,7 @@ update_core_assets() {
     fi
     
     # Copy core assets
-    copy_without_meta "$SOURCE_DIR" "$DEST_DIR"
+    copy_with_meta "$SOURCE_DIR" "$DEST_DIR"
     
     log_success "Core assets updated successfully!"
 }
@@ -326,7 +326,7 @@ update_samples() {
             sample_name=$(basename "$sample_dir")
             dest_sample_dir="$DEST_BASE_DIR/$sample_name"
             
-            copy_without_meta "$sample_dir" "$dest_sample_dir"
+            copy_with_meta "$sample_dir" "$dest_sample_dir"
         fi
     done
     

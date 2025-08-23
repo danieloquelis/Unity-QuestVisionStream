@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.2.0 - 2025-08-23
+
+### Chores
+- Add missing .meta files for Samples folder ([8e11516](https://github.com/danieloquelis/Unity-QuestVisionStream/commit/8e1151696f87f44895db41d3dfadf590611edda3))
+
 ## 2.1.0 - 2025-08-23
 
 ### Chores
