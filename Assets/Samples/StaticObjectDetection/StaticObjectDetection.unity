@@ -1881,7 +1881,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7792627254621781564, guid: a2b041a88f8ab48c1be3a9e2c7de62ee, type: 3}
       propertyPath: signalingServerUrl
-      value: wss://2bfccef9d987.ngrok-free.app
+      value: wss://feecf7c13b68.ngrok-free.app
       objectReference: {fileID: 0}
     - target: {fileID: 7792627254621781564, guid: a2b041a88f8ab48c1be3a9e2c7de62ee, type: 3}
       propertyPath: passthroughCameraManager

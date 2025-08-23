@@ -1,0 +1,24 @@
+{
+  "name": "com.questvisionstream",
+  "displayName": "Quest Vision Stream",
+  "version": "1.0.1",
+  "unity": "6000.0",
+  "description": "Short one-liner of what your plugin does.",
+  "author": {
+    "name": "Daniel Oquelis",
+    "email": "daniel.oquelis@gmail.com",
+    "url": "https://github.com/danieloquelis"
+  },
+  "samples": [
+    {
+      "displayName": "Core Assets",
+      "description": "Core prefabs and scripts for Quest Vision Stream. If you already imported it, avoid bringing it again. If not imported yet, please place this folder into Assets/QuestVisionStream and extract all files in there.",
+      "path": "Samples~/QuestVisionStream"
+    },
+    {
+      "displayName": "Static Object Detection",
+      "description": "Basic demo showing the Android plugin working.",
+      "path": "Samples~/StaticObjectDetection"
+    }
+  ]
+}
