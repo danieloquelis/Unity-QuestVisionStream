@@ -1,7 +1,7 @@
 {
   "name": "com.questvisionstream",
   "displayName": "Quest Vision Stream",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "unity": "6000.0",
   "description": "Short one-liner of what your plugin does.",
   "author": {

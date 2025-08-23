@@ -218,8 +218,6 @@ update_package_version() {
     
     log_info "Updating package.json version to: $new_version"
     
-    # Create backup
-    cp "$PACKAGE_JSON" "$PACKAGE_JSON.backup"
     
     # Update version using sed
     if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -260,42 +258,6 @@ build_android() {
     
     log_info "Copying AAR to UPM package..."
     cp "$AAR_SOURCE" "$AAR_DESTINATION/QuestVisionStreamPlugin-release.aar"
-    
-    # Create/update meta file
-    cat > "$AAR_DESTINATION/QuestVisionStreamPlugin-release.aar.meta" << EOF
-fileFormatVersion: 2
-guid: $(openssl rand -hex 16)
-PluginImporter:
-  externalObjects: {}
-  serializedVersion: 2
-  iconMap: {}
-  executionOrder: {}
-  defineConstraints: []
-  isPreloaded: 0
-  isOverridable: 0
-  isExplicitlyReferenced: 0
-  validateReferences: 1
-  platformData:
-  - first:
-      Android: Android
-    second:
-      enabled: 1
-      settings: {}
-  - first:
-      Any: 
-    second:
-      enabled: 0
-      settings: {}
-  - first:
-      Editor: Editor
-    second:
-      enabled: 0
-      settings:
-        DefaultValueInitialized: true
-  userData: 
-  assetBundleName: 
-  assetBundleVariant: 
-EOF
     
     cd "$PROJECT_ROOT"
     log_success "Android plugin built and copied successfully!"
@@ -371,6 +333,28 @@ update_samples() {
     log_success "Samples updated successfully!"
 }
 
+# Function to get the latest git tag
+get_latest_tag() {
+    local latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+    echo "$latest_tag"
+}
+
+# Function to update changelog using external script
+update_changelog() {
+    local new_version="$1"
+    local latest_tag="$2"
+    
+    log_info "Updating changelog using update-changelog.sh..."
+    
+    # Call the external changelog script
+    if [[ -f "$SCRIPT_DIR/update-changelog.sh" ]]; then
+        "$SCRIPT_DIR/update-changelog.sh" "$new_version" "$latest_tag"
+    else
+        log_error "update-changelog.sh not found at: $SCRIPT_DIR/update-changelog.sh"
+        exit 1
+    fi
+}
+
 # Main execution
 main() {
     log_info "Starting UPM build process..."
@@ -389,7 +373,15 @@ main() {
     CURRENT_VERSION=$(get_current_version)
     NEW_VERSION=$(increment_version "$CURRENT_VERSION" "$VERSION_INCREMENT")
     
+    # Get latest git tag for changelog generation
+    LATEST_TAG=$(get_latest_tag)
+    
     log_info "Version: $CURRENT_VERSION -> $NEW_VERSION (increment: $VERSION_INCREMENT)"
+    if [[ -n "$LATEST_TAG" ]]; then
+        log_info "Latest git tag: $LATEST_TAG"
+    else
+        log_info "No previous git tag found"
+    fi
     
     # Execute build steps based on configuration
     if [[ "$BUILD_ANDROID" == true ]]; then
@@ -409,9 +401,14 @@ main() {
     # Update package version
     update_package_version "$NEW_VERSION"
     
+    # Update changelog
+    update_changelog "$NEW_VERSION" "$LATEST_TAG"
+    
     log_success "UPM build completed successfully!"
     log_success "Package version: $NEW_VERSION"
+    log_success "Changelog updated with commits since $LATEST_TAG"
     log_info "Package location: $UPM_DIR"
+    log_info "Don't forget to create a new git tag: git tag v$NEW_VERSION"
 }
 
 # Run main function
