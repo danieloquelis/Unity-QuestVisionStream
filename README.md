@@ -16,6 +16,8 @@ This approach provides:
 
 ## Demos
 
+This is just an example use case for the library and is not intended to be limited to object detection. The 3D tags are inspired by the amazing work of [Lucas Martinic](https://github.com/lucas-martinic/Unity-MetaXR-AI-Florence2) 
+
 | **YOLO XL**                | **Florence2 (Zero-shot)**      |
 | -------------------------- | ------------------------------ |
 | ![YOBJD](Media/YoloXL.gif) | ![F2OBJD](Media/Florence2.gif) |
