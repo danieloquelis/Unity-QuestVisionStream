@@ -1,5 +1,10 @@
 # Unity QuestVisionStream
 
+![status: beta](https://img.shields.io/badge/status-beta-orange)
+> 🚧 **Beta Notice**  
+> This package is currently in **beta**.  
+> We’re actively looking for feedback — please open an issue or discussion if you have suggestions!
+
 A Unity package that enables real-time computer vision operations on Meta Quest headsets using the Passthrough Camera API (PCA) with WebRTC streaming to external GPU servers for AI inference. This solution bypasses traditional HTTP request bottlenecks, delivering seamless real-time performance.
 
 ## Overview
